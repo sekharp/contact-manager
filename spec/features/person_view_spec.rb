@@ -66,19 +66,60 @@ describe 'the person view', type: :feature do
 
   describe 'email addresses' do
     before(:each) do
-      person.email_addresses.create(address: 'barackobama@gmail.com', person_id: 1)
-      person.email_addresses.create(address: 'hillaryclinton@gmail.com', person_id: 2)
+      person.email_addresses.create(address: 'barackobama@gmail.com')
+      person.email_addresses.create(address: 'hillaryclinton@gmail.com')
       visit person_path(person)
     end
 
     it 'shows the email addresses' do
-      expect(page).to have_selector('li', text: 'barackobama@gmail.com')
-      expect(page).to have_selector('li', text: 'hillaryclinton@gmail.com')
+      person.email_addresses.each do |email|
+        expect(page).to have_selector('li', text: email.address)
+      end
     end
 
     it 'has a link to add a new email address' do
       expect(page).to have_link('Add email address', href: new_email_address_path(person_id: person.id))
     end
 
+    it 'adds a new email address' do
+      page.click_link('Add email address')
+      page.fill_in('Address', with: 'sekharp@gmail.com')
+      page.click_button('Create Email address')
+      expect(current_path).to eq(person_path(person))
+      expect(page).to have_content('sekharp@gmail.com')
+    end
+
+    it 'has links to edit email addresses' do
+      person.email_addresses.each do |email|
+        expect(page).to have_link('edit', href: edit_email_address_path(email))
+      end
+    end
+
+    it 'edits an email address' do
+      email = person.email_addresses.first
+      old_address = email.address
+
+      first(:link, 'edit').click
+      page.fill_in('Address', with: 'paulryan@gmail.com')
+      page.click_button('Update Email address')
+      expect(current_path).to eq(person_path(person))
+      expect(page).to have_content('paulryan@gmail.com')
+      expect(page).to_not have_content(old_address)
+    end
+
+    it 'has links to delete email addresses' do
+      person.email_addresses.each do |email|
+        expect(page).to have_link('delete', href: email_address_path(email))
+      end
+    end
+
+    it 'deletes an email address' do
+      email = person.email_addresses.first
+      old_address = email.address
+
+      first(:link, 'delete').click
+      expect(current_path).to eq(person_path(person))
+      expect(page).to_not have_content(old_address)
+    end
   end
 end
